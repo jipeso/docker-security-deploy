@@ -1,17 +1,19 @@
-FROM node:20-alpine
+FROM node:20-alpine AS build-stage
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
-
-RUN npm i -g serve
+RUN npm ci
 
 COPY . .
 
 RUN npm run build
 
-EXPOSE 3000
+FROM nginxinc/nginx-unprivileged:alpine-slim
 
-CMD [ "serve", "-s", "dist" ]
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+EXPOSE 8080
+
+USER nginx
